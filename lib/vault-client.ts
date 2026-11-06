@@ -96,7 +96,7 @@ function isBrowserAccount(value: unknown): value is BrowserAccount {
     (account.provider === undefined ||
       account.provider === "anthropic" ||
       account.provider === "openai") &&
-    (account.source === undefined || account.source === "sub2api") &&
+    (account.source === undefined || account.source === "sub2api" || account.source === "magpie") &&
     typeof account.credentialExpiresAt === "number" &&
     Number.isFinite(account.credentialExpiresAt) &&
     account.credentialExpiresAt >= 0

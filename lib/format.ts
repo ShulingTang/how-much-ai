@@ -54,7 +54,7 @@ export function extractBars(usage: UsageData, now = Date.now()): Bar[] {
   const bars: Bar[] = [];
   const push = (key: string, label: string, bucket?: { utilization: number | null; resets_at: string | null } | null) => {
     // A saved external snapshot can expire while it is still cached or displayed in a tab.
-    if (usage.snapshot?.source === "sub2api" && bucket?.resets_at && Date.parse(bucket.resets_at) <= now) return;
+    if (usage.snapshot && bucket?.resets_at && Date.parse(bucket.resets_at) <= now) return;
     if (bucket && bucket.utilization != null) {
       bars.push({
         key,

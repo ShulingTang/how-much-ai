@@ -18,7 +18,7 @@ export async function readLocalReplacementTokens(
   deadRefreshToken: string,
 ): Promise<AccountTokens | null> {
   if (!localConnectAvailable()) return null;
-  if (account.credentialKind !== "rotating" || account.sub2api) return null;
+  if (account.credentialKind !== "rotating" || account.sub2api || account.magpie) return null;
   if (account.provider && account.provider !== "anthropic") return null;
 
   let raw: string;

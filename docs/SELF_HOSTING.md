@@ -119,6 +119,28 @@ Automatic polling reads `GET /api/v1/admin/accounts/:id`; connection also reads 
 
 The quota sample timestamp is shown as a local date/time and relative age, separately from the dashboard's last fetch time and the last completed active-refresh request. A successful refresh request does not guarantee a new upstream sample. OpenAI freshness is based on saved `codex_usage_updated_at`, not the usage endpoint’s response time; Claude OAuth can use the active response’s `updated_at`, which may describe a cached result. SetupToken estimates are not treated as live quota samples. Missing or expired windows remain unknown rather than being inferred as 100% remaining. Samples older than five minutes or without a valid sample time are marked stale and do not trigger notifications. A quiet sub2api account may therefore have no current data until sub2api itself records another sample. ChatGPT plan labels are used when metadata supplies them; Claude currently uses the generic provider label. These fields are version-dependent; see [the source investigation](sub2api-research.md).
 
+### Magpie Claude accounts
+
+Choose **Connect account → Magpie**, enter the gateway base URL and a **Magpie gateway key**, click **Load Claude accounts**, then select a Claude subscription account. This connection supports Magpie's built-in `claude` subscription provider only; Codex, other providers, balances, and inference-key budgets are not imported. Claude's OAuth credentials and their renewal remain on the Magpie machine. The dashboard stores only the gateway key in its existing encrypted vault and returns credential-free display metadata to the browser.
+
+Prefer a dedicated read-only key. On the machine running Magpie:
+
+```bash
+magpie gateway-key add how-much-ai --read-only
+magpie gateway-key list
+# Replace KEY_ID with the ID from the list, not the secret key value.
+magpie gateway-key models KEY_ID 'claude/*'
+magpie gateway-key quotas KEY_ID on
+```
+
+Copy the newly created key into the connection form. Enable **Share on local network** in Magpie when connecting from another machine, and allow the dashboard server's IP in Magpie's allowed-address settings. For Docker, allow the address the gateway actually sees. A missing or rejected key returns 401; a key without quota permission, or a blocked client address, returns 403. Use a gateway key rather than a Sub2API inference key. Removing an account here only disconnects this dashboard. To rotate a key, use **Reconnect Magpie** with the same normalized gateway URL and Claude account; the nickname and original connection date are retained.
+
+The URL is reached by the **application server**, not the visitor's browser. `localhost` inside Docker is that container; use an accessible LAN address or a configured host-gateway mapping for a gateway elsewhere. Loopback and private-network URLs are intentionally supported. Use HTTPS outside a trusted private network. Credentials in URLs, query strings, fragments, and redirects are rejected; upstream response sizes and request durations are bounded. Never put a real gateway key in source code or an environment example.
+
+Automatic checks read `GET /v1/magpie/quotas?kept=1`, which asks Magpie for its last saved readings without prompting a vendor read. An account's **Refresh** or **Refresh all** uses `GET /v1/magpie/quotas`; Magpie can still return cached data. The application never calls model inference, Claude profile, OAuth refresh, or Magpie's credential-management endpoints. Refreshes share the existing account lease/cache and respect rate-limit cooldowns.
+
+The `5 hours` and `7 days` windows map their measured `used` percentage and `resetsAt` into the dashboard bars. `readAt` is shown separately as the **Magpie quota sample** time. Missing/invalid values and expired windows stay unknown rather than implying 100% remaining. Unknown, future-dated, and older-than-five-minute samples are marked stale and do not trigger notifications. A successful refresh request does not imply a new quota sample. Account identity combines the gateway URL, `claude` provider, and Magpie's `user` identifier, so the same email on two gateways stays distinct; missing or ambiguous identities cannot be connected.
+
 ### Remote machines
 
 “Connect from this machine” always means the machine running the Next.js server. On a remote server it cannot inspect a visitor's laptop.

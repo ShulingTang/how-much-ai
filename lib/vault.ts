@@ -21,6 +21,7 @@ import { anyApi } from "convex/server";
 import { scopedKey } from "./app-config";
 import { withLocalVaultMutationLock } from "./local-file-lock";
 import { normalizeSub2ApiUrl, validSub2ApiAccountId } from "./sub2api-config";
+import { normalizeMagpieUrl, validMagpieUser } from "./magpie-config";
 import type { AccountCredentialKind, AccountTokens, StoredAccount } from "./types";
 import type { ProviderId } from "./providers/types";
 
@@ -1086,6 +1087,19 @@ export function parseStoredAccounts(value: unknown): StoredAccount[] {
       }
     }
 
+    let magpie: StoredAccount["magpie"];
+    if (candidate.magpie !== undefined) {
+      const source = candidate.magpie;
+      if (!record(source) || !validMagpieUser(source.user) || sub2api || provider || credentialKind !== "long_lived" || refreshToken !== null) {
+        throw new VaultValidationError(`accounts[${index}].magpie must identify an externally managed Claude account`);
+      }
+      try {
+        magpie = { baseUrl: normalizeMagpieUrl(source.baseUrl), user: source.user };
+      } catch {
+        throw new VaultValidationError(`accounts[${index}].magpie.baseUrl must be a valid HTTP(S) URL`);
+      }
+    }
+
     const fullName = optionalBoundedString(candidate.fullName, "fullName", index);
     const label = optionalBoundedString(candidate.label, "label", index);
 
@@ -1099,6 +1113,7 @@ export function parseStoredAccounts(value: unknown): StoredAccount[] {
       credentialKind,
       ...(provider ? { provider } : {}),
       ...(sub2api ? { sub2api } : {}),
+      ...(magpie ? { magpie } : {}),
       tokens: {
         accessToken: requiredString(candidate.tokens.accessToken, "tokens.accessToken", index, {
           nonEmpty: true,

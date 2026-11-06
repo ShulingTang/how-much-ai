@@ -42,6 +42,9 @@ test("vault client accepts redacted account DTOs and rejects credential-bearing 
     const external = account("external-snapshot", { source: "sub2api", credentialKind: "long_lived", credentialExpiresAt: 0 });
     globalThis.fetch = async () => Response.json({ accounts: [external], revision });
     assert.deepEqual(await fetchVault(), { accounts: [external], revision });
+    const magpie = account("magpie-snapshot", { source: "magpie", credentialKind: "long_lived", credentialExpiresAt: 0 });
+    globalThis.fetch = async () => Response.json({ accounts: [managed, external, magpie], revision });
+    assert.deepEqual(await fetchVault(), { accounts: [managed, external, magpie], revision });
     globalThis.fetch = async () => Response.json({ accounts: [{ ...external, source: "unexpected" }], revision });
     await assert.rejects(() => fetchVault(), /invalid synchronization revision/i);
 

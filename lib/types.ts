@@ -20,6 +20,8 @@ export interface StoredAccount {
   provider?: ProviderId;
   // External source; tokens.accessToken holds its admin key, never an upstream credential.
   sub2api?: { baseUrl: string; accountId: number };
+  // External quota source; tokens.accessToken holds its Magpie gateway key.
+  magpie?: { baseUrl: string; user: string };
   tokens: AccountTokens;
 }
 
@@ -34,7 +36,7 @@ export interface BrowserAccount {
   addedAt: number;
   credentialKind: AccountCredentialKind;
   provider: ProviderId; // always projected (defaults to "anthropic") so the UI can render a badge
-  source?: "sub2api";
+  source?: "sub2api" | "magpie";
   credentialExpiresAt: number;
 }
 
@@ -91,7 +93,7 @@ export interface SpendInfo {
 }
 
 export interface UsageData {
-  snapshot?: { source: "sub2api"; sampledAt: string | null; refreshCompletedAt?: number };
+  snapshot?: { source: "sub2api" | "magpie"; sampledAt: string | null; refreshCompletedAt?: number };
   five_hour?: UsageBucket | null;
   seven_day?: UsageBucket | null;
   seven_day_opus?: UsageBucket | null;
