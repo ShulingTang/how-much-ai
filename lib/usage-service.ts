@@ -109,7 +109,7 @@ function coordinatedCacheAction(entry: CacheEntry | null, now: number, activeRef
   // rejected token as valid merely because its timestamp is in the future would restart rotation.
   if (entry?.status === "reauth") return "cooldown";
   if (activeRefresh) {
-    // Manual sub2api reads bypass passive cache freshness, never leases or backoff.
+    // Manual external-source reads bypass passive cache freshness, never leases or backoff.
     if (entry && entry.cooldownUntil > now) return "cooldown";
     const completedAt = usage?.snapshot?.refreshCompletedAt;
     if (entry?.hasUsage && completedAt && now >= completedAt && now - completedAt < 10_000) return "fresh";
@@ -335,7 +335,9 @@ async function refreshAndFetch(
       const { status, cooldownUntil } = reauthPatch(now);
       await store.commit({ status, cooldownUntil });
       return reauthResult(now, prior, provider.managesCredentialsExternally
-        ? new Error("sub2api rejected the admin key. Reconnect sub2api.") : undefined);
+        ? new Error(account.magpie
+          ? "Magpie rejected the key or quota access. Check Quotas and allowed addresses, then reconnect Magpie."
+          : "sub2api rejected the admin key. Reconnect sub2api.") : undefined);
     }
     try {
       const refreshed = await provider.refresh(
@@ -876,13 +878,13 @@ export async function getAccountUsage(userId: string, account: StoredAccount, op
   // Ignore the browser's token fields entirely. `accountId` is the lookup key; the server vault is
   // the sole credential authority and remains correct even for a stale tab or a future id-only API.
   const effective = persisted;
-  const activeRefresh = Boolean(effective.sub2api && opts?.activeRefresh);
+  const activeRefresh = Boolean((effective.sub2api || effective.magpie) && opts?.activeRefresh);
   const cx = convexConfig();
   const redis = cx ? null : redisUsageConfig();
   const result = cx ? await getAccountUsageConvex(cx, userId, effective, activeRefresh)
     : redis ? await getAccountUsageRedis(redis, userId, effective, activeRefresh)
       : await getAccountUsageLocal(userId, effective, activeRefresh);
-  if (effective.sub2api && result.usage) {
+  if ((effective.sub2api || effective.magpie) && result.usage) {
     const sampled = Date.parse(result.usage.snapshot?.sampledAt ?? "");
     if (!Number.isFinite(sampled) || sampled > Date.now() + 60_000 || Date.now() - sampled > CACHE_TTL_MS) {
       return { ...result, stale: true, status: result.status === "ready" ? "stale" : result.status };

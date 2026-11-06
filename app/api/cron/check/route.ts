@@ -67,7 +67,7 @@ async function checkUser(userId: string, assertLease: () => Promise<void>): Prom
   for (const account of accounts) {
     await assertLease();
     const result = await getAccountUsage(userId, account);
-    if (account.sub2api && result.stale) {
+    if ((account.sub2api || account.magpie) && result.stale) {
       observations.push({ accountId: account.id, available: false });
       continue;
     }

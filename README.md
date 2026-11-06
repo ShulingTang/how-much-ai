@@ -51,6 +51,7 @@ Click **Connect account**, then choose a provider:
 
 - **Claude** — use the private app sign-in flow and paste the returned `code#state`. A same-machine Claude Code login and Convex-backed device pairing are also available as convenience options. `claude setup-token` is inference-only and cannot read the subscription-usage endpoint.
 - **ChatGPT/Codex** — read the Codex login from the machine running the app or paste the contents of `~/.codex/auth.json`.
+- **Magpie (Claude only)** — enter a Magpie gateway URL and gateway key, then choose a Claude subscription account. The dashboard reads its five-hour and weekly quota windows; the Claude login stays on the Magpie machine. See [Magpie setup](docs/SELF_HOSTING.md#magpie-claude-accounts) for read-only keys and quota permissions.
 
 Credentials are encrypted in the server-side vault and are never returned to the browser after connection. Local and device-pairing shortcuts may share a rotating CLI credential; the provider-specific private sign-in is the more durable choice when available.
 

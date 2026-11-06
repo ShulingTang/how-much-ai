@@ -214,7 +214,7 @@ export function Dashboard({ showSignOut }: DashboardProps) {
         const res = await fetch("/api/usage", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ accountId: id, activeRefresh: manual && accountsRef.current.find(a => a.id === id)?.source === "sub2api" }),
+          body: JSON.stringify({ accountId: id, activeRefresh: manual && Boolean(accountsRef.current.find(a => a.id === id)?.source) }),
         });
 
         // A 401 here means the app session expired (not the Claude token) — go re-authenticate.
